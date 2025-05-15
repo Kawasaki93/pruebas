@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Contabilidad</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Contabilidad</h1>
+        </header>
+        
+        <div class="input-section">
+            <h2>Registro Diario</h2>
+            <div class="input-group">
+                <label for="efectivo">Efectivo:</label>
+                <input type="number" id="efectivo" step="0.01">
+            </div>
+            <div class="input-group">
+                <label for="tarjeta">Tarjeta:</label>
+                <input type="number" id="tarjeta" step="0.01">
+            </div>
+            <button id="guardar">Guardar</button>
+        </div>
+
+        <div class="totals-section">
+            <h2>Totales del Día</h2>
+            <div class="totals-grid">
+                <div class="total-item">
+                    <span>Efectivo Acumulado:</span>
+                    <span id="efectivo-total">0.00€</span>
+                </div>
+                <div class="total-item">
+                    <span>Tarjeta Acumulada:</span>
+                    <span id="tarjeta-total">0.00€</span>
+                </div>
+                <div class="total-item total-general">
+                    <span>Total General:</span>
+                    <span id="total-general">0.00€</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="monthly-section">
+            <h2>Vista Mensual</h2>
+            <div class="month-selector">
+                <select id="month-select">
+                    <option value="0">Enero</option>
+                    <option value="1">Febrero</option>
+                    <option value="2">Marzo</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Mayo</option>
+                    <option value="5">Junio</option>
+                    <option value="6">Julio</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Septiembre</option>
+                    <option value="9">Octubre</option>
+                    <option value="10">Noviembre</option>
+                    <option value="11">Diciembre</option>
+                </select>
+                <select id="year-select"></select>
+            </div>
+            <div class="monthly-totals">
+                <div id="monthly-data"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="config.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html> 

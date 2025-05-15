@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Playa Juan</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=1.0">
   <meta name="description" content="Aplicación de gestión de hamacas para Playa Juan">
   <meta name="theme-color" content="#20B2AA">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,25 +16,21 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
   <!-- Estilos personalizados -->
   <link rel="stylesheet" href="./style.css">
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="manifest.json">
   <!-- Iconos para iOS -->
-  <link rel="apple-touch-icon" href="./icon-192x192.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="./icon-152x152.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./icon-180x180.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="./icon-167x167.png">
+  <link rel="apple-touch-icon" href="icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-180x180.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icon-167x167.png">
   <!-- Splash screens para iOS -->
-  <link rel="apple-touch-startup-image" href="./splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
-  <link rel="apple-touch-startup-image" href="./splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-  <link rel="apple-touch-startup-image" href="./splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-  <link rel="apple-touch-startup-image" href="./splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+  <link rel="apple-touch-startup-image" href="splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+  <link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
   <!-- Icono principal -->
-  <link rel="icon" href="./icon-192x192.png">
+  <link rel="icon" href="icon-192x192.png">
 </head>
 <body>
-  <div id="db-connection-btn" class="db-connection-btn">
-    <span class="connection-status">●</span>
-    <span class="connection-text">Conectado</span>
-  </div>
 
 <div class="beach_wrapper zoom">
   <div class="sunbed toggle">
@@ -82,26 +78,23 @@
   <label for="recibidoManual">Recibido&nbsp;(€):</label>
   <input type="number" id="recibidoManual" placeholder="" step="0.01">
 
-    <div class="switch-container">
-      <span class="switch-text-left">Efectivo</span>
-      <label class="switch">
-        <input type="checkbox" id="pago">
-        <span class="slider round"></span>
-      </label>
-      <span class="switch-text-right">Tarjeta</span>
-    </div>
+  <div class="toggle-container">
+    <label class="toggle-label">Método de pago:</label>
+    <label class="switch">
+      <input type="checkbox" id="pago">
+      <span class="slider round"></span>
+    </label>
+    <span class="toggle-text" id="pagoText">Efectivo</span>
+  </div>
 
-    <div class="switch-group">
-      <div class="switch-header">Sombrilla extra:</div>
-      <div class="switch-container">
-        <span class="switch-text-left">No</span>
-        <label class="switch">
-          <input type="checkbox" id="sombrillaExtra">
-          <span class="slider round"></span>
-        </label>
-        <span class="switch-text-right">Sí (+4€)</span>
-      </div>
-    </div>
+  <div class="toggle-container">
+    <label class="toggle-label">Sombrilla Extra:</label>
+    <label class="switch">
+      <input type="checkbox" id="sombrillaExtra">
+      <span class="slider round"></span>
+    </label>
+    <span class="toggle-text" id="sombrillaText">No</span>
+  </div>
 
   <button onclick="calcularCambio()">Calcular</button>
 
@@ -127,26 +120,27 @@
     <!-- Botones debajo -->
     <div class="button-container">
       <button onclick="reiniciarCalculadora()">Reiniciar calculadora</button>
-      <button onclick="procesarDevolucion()">Devolución</button> 
+      <button onclick="procesarDevolucion()">Devolución</button>
     </div>
   </div>
 </div>
 <!-- Scripts personalizados -->
+<script src="./script.js"></script>
 
 <!-- Menú contextual de colores -->
-<div id="colorContextMenu" class="color-context-menu" style="display: none;">
-    <div class="color-option step1" data-step="1" title="Disponible"></div>
-    <div class="color-option step2" data-step="2" title="Ocupado"></div>
-    <div class="color-option step3" data-step="3" title="Reservado"></div>
-    <div class="color-option step4" data-step="4" title="Mantenimiento"></div>
-    <div class="color-option step5" data-step="5" title="Especial"></div>
-    <div class="color-option step6" data-step="6" title="No disponible"></div>
+<div class="color-context-menu" id="colorContextMenu" role="menu" aria-label="Selector de colores">
+  <div class="color-option step1" data-step="1" data-label="Disponible" role="menuitem" tabindex="0" aria-label="Color disponible"></div>
+  <div class="color-option step2" data-step="2" data-label="Ocupado" role="menuitem" tabindex="0" aria-label="Color ocupado"></div>
+  <div class="color-option step3" data-step="3" data-label="Reservado" role="menuitem" tabindex="0" aria-label="Color reservado"></div>
+  <div class="color-option step4" data-step="4" data-label="Mantenimiento" role="menuitem" tabindex="0" aria-label="Color mantenimiento"></div>
+  <div class="color-option step5" data-step="5" data-label="Especial" role="menuitem" tabindex="0" aria-label="Color especial"></div>
+  <div class="color-option step6" data-step="6" data-label="No disponible" role="menuitem" tabindex="0" aria-label="Color no disponible"></div>
 </div>
 
 <!-- Botonera anclada abajo -->
 <div class="botonera-fija">
   <button class="fab" id="menu-toggle">☰</button>
-  <div class="menu-desplegable" id="menu-desplegable">
+  <div class="menu-desplegable" id="menu">
     <button onclick="SunbedController.reset_local_storage_except_customers();">Reset Colors</button>
     <button onclick="toggleDesconectadosFila0(1)">Fila0</button>
     <button onclick="toggledesconectadosFila1(1)">Fila1</button>
@@ -178,53 +172,18 @@
     messagingSenderId: "978593311158",
     appId: "1:978593311158:web:7464a2e217a70ee215b917"
   };
-
-  // Inicializar Firebase y asegurarnos de que esté disponible globalmente
-  window.firebaseApp = firebase.initializeApp(firebaseConfig);
-  window.db = window.firebaseApp.database();
-
-  // Verificar que Firebase está inicializado correctamente
-  if (!window.db) {
-    console.error('Error: Firebase no se ha inicializado correctamente');
-  } else {
-    console.log('Firebase inicializado correctamente');
-  }
+  // Inicializar Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 </script>
-
-<!-- Scripts personalizados DESPUÉS de Firebase -->
+<!-- Scripts personalizados SIEMPRE después de Firebase y su inicialización -->
 <script>
-  // Esperar a que Firebase esté listo antes de cargar script.js
-  window.addEventListener('load', function() {
-    if (window.db) {
-      const scriptJs = document.createElement('script');
-      scriptJs.src = './script.js';
-      scriptJs.onload = function() {
-        console.log('script.js cargado correctamente');
-      };
-      scriptJs.onerror = function(error) {
-        console.error('Error al cargar script.js:', error);
-      };
-      document.body.appendChild(scriptJs);
-    } else {
-      console.error('Firebase no está disponible. No se cargará script.js');
-    }
-  });
-</script>
-
-<!-- Service Worker registration -->
-<script>
+// Registro del Service Worker con ruta relativa para GitHub Pages
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', {
-        scope: './'
-      })
-      .then((reg) => { 
-        console.log("Service Worker registrado correctamente");
-        console.log("Scope:", reg.scope);
-      })
-      .catch((err) => { 
-        console.error("Error al registrar el Service Worker:", err);
-      });
+    navigator.serviceWorker.register('sw.js')
+      .then((reg) => { console.log("Service Worker registrado", reg); })
+      .catch((err) => { console.error("Error al registrar el Service Worker", err); });
   });
 }
 </script>

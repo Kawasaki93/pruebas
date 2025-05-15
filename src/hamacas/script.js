@@ -1,14 +1,10 @@
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const swPath = './sw.js'; // Ruta relativa al Service Worker
-      const registration = await navigator.serviceWorker.register(swPath, {
-        scope: './' // Scope relativo
-      });
-      console.log("Service Worker registrado correctamente en:", registration.scope);
-    } catch (err) {
-      console.error("Error al registrar el Service Worker:", err);
-    }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      console.log("Service Worker registrado", reg);
+    }).catch((err) => {
+      console.error("Error al registrar el Service Worker", err);
+    });
   });
 }
 
@@ -364,7 +360,7 @@ function clearClick() {
                 totalTarjeta = 0;
 
                 // Recargar la página para asegurar que todo se actualiza
-                window.location.reload();
+        window.location.reload();
             })
             .catch(error => {
                 console.error("Error al resetear los datos:", error);
@@ -641,7 +637,7 @@ var SunbedController = function() {
                     
                     // Forzar actualización de la interfaz
                     setTimeout(() => {
-                        window.location.reload();
+                window.location.reload();
                     }, 2000);
                 }).catch((error) => {
                     // Remover indicador de carga en caso de error
@@ -696,8 +692,8 @@ function calcularCambio() {
   const totalSelect = parseFloat(document.getElementById('totalSelect').value);
   const totalManual = parseFloat(document.getElementById('totalManual').value);
   const recibidoManual = parseFloat(document.getElementById('recibidoManual').value);
-  const metodo = document.getElementById('pago').checked ? 'tarjeta' : 'efectivo';
-  const sombrillaExtra = document.getElementById('sombrillaExtra').checked ? 'si' : 'no';
+  const metodo = document.getElementById('pago').value;
+  const sombrillaExtra = document.getElementById('sombrillaExtra').value;
 
   let total = totalManual || totalSelect;
   
@@ -757,14 +753,20 @@ function calcularCambio() {
   // Añadir información de sombrilla extra al historial si está seleccionada
   const sombrillaInfo = sombrillaExtra === 'si' ? ' (Sombrilla Extra)' : '';
   li.textContent = `Hamaca ${hamaca} - Total: €${total.toFixed(2)}${sombrillaInfo} - Recibido: €${recibido.toFixed(2)} - Cambio: €${cambio.toFixed(2)} - Método: ${metodo} - ${fecha}`;
-  historial.insertBefore(li, historial.firstChild);
+  
+  // Insertar al principio del historial
+  if (historial.firstChild) {
+    historial.insertBefore(li, historial.firstChild);
+  } else {
+    historial.appendChild(li);
+  }
 
   // Actualizar totales en Firebase
   db.ref('totales').transaction((currentTotales) => {
     const totales = currentTotales || { efectivo: 0, tarjeta: 0, general: 0 };
-    if (metodo === 'efectivo') {
+  if (metodo === 'efectivo') {
       totales.efectivo = (parseFloat(totales.efectivo) || 0) + total;
-    } else {
+  } else {
       totales.tarjeta = (parseFloat(totales.tarjeta) || 0) + total;
     }
     totales.general = totales.efectivo + totales.tarjeta;
@@ -787,8 +789,8 @@ function calcularCambio() {
   document.getElementById('totalSelect').selectedIndex = 1; // 16€ 2 hamacas
   document.getElementById('totalManual').value = '';
   document.getElementById('recibidoManual').value = '';
-  document.getElementById('pago').checked = false; // Efectivo
-  document.getElementById('sombrillaExtra').checked = false; // No
+  document.getElementById('pago').selectedIndex = 0; // Efectivo
+  document.getElementById('sombrillaExtra').selectedIndex = 0; // No
 }
 
 function procesarDevolucion() {
@@ -824,9 +826,9 @@ function procesarDevolucion() {
   // Actualizar totales en Firebase
   db.ref('totales').transaction((currentTotales) => {
     const totales = currentTotales || { efectivo: 0, tarjeta: 0, general: 0 };
-    if (metodo === 'efectivo') {
+  if (metodo === 'efectivo') {
       totales.efectivo = (parseFloat(totales.efectivo) || 0) - total;
-    } else {
+  } else {
       totales.tarjeta = (parseFloat(totales.tarjeta) || 0) - total;
     }
     totales.general = totales.efectivo + totales.tarjeta;
@@ -855,84 +857,14 @@ function toggleHistorial() {
   historialContainer.style.display = historialContainer.style.display === 'none' ? 'block' : 'none';
 }
 
-function mostrarHistorialResumen() {
-  const historialContainer = document.getElementById('historialContainer');
-  const historial = document.getElementById('historial');
-  
-  if (!historialContainer || !historial) {
-    console.error('No se encontraron los elementos del historial');
-    return;
-  }
-
-  // Mostrar el contenedor
-  historialContainer.style.display = 'block';
-  
-  // Limpiar el historial actual
-  historial.innerHTML = '';
-  
-  // Mostrar indicador de carga
-  historial.innerHTML = '<li>Cargando historial...</li>';
-  
-  // Obtener el historial de Firebase
-  db.ref('historial').once('value')
-    .then((snapshot) => {
-      if (!snapshot.exists()) {
-        historial.innerHTML = '<li>No hay registros en el historial</li>';
-        return;
-      }
-
-      const historialData = snapshot.val();
-      const historialArray = Object.entries(historialData)
-        .map(([id, data]) => ({
-          id,
-          ...data
-        }))
-        .sort((a, b) => {
-          try {
-            const fechaA = new Date(a.fecha.split(' ')[0].split('/').reverse().join('-'));
-            const fechaB = new Date(b.fecha.split(' ')[0].split('/').reverse().join('-'));
-            return fechaB - fechaA;
-          } catch (error) {
-            console.error('Error al ordenar fechas:', error);
-            return 0;
-          }
-        });
-
-      historial.innerHTML = ''; // Limpiar el mensaje de carga
-
-      historialArray.forEach(registro => {
-        try {
-          const li = document.createElement('li');
-          if (registro.devolucion) {
-            li.textContent = `Devolución Hamaca ${registro.hamaca} - Total: €${registro.total} - Devolución: €${registro.devolucion} - Método: ${registro.metodo} - ${registro.fecha}`;
-          } else {
-            const sombrillaInfo = registro.sombrillaExtra ? ' (Sombrilla Extra)' : '';
-            li.textContent = `Hamaca ${registro.hamaca} - Total: €${registro.total}${sombrillaInfo} - Recibido: €${registro.recibido} - Cambio: €${registro.cambio} - Método: ${registro.metodo} - ${registro.fecha}`;
-          }
-          historial.appendChild(li);
-        } catch (error) {
-          console.error('Error al procesar registro:', error, registro);
-        }
-      });
-    })
-    .catch(error => {
-      console.error('Error al obtener el historial:', error);
-      historial.innerHTML = '<li>Error al cargar el historial. Por favor, inténtalo de nuevo.</li>';
-    });
-}
-
 //FUNCIONAMIENTO DE SERVICE WORKER NO TOCAR
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-        try {
-      const swPath = './sw.js'; // Ruta relativa al Service Worker
-      const registration = await navigator.serviceWorker.register(swPath, {
-        scope: './' // Scope relativo
-      });
-      console.log("Service Worker registrado correctamente en:", registration.scope);
-    } catch (err) {
-      console.error("Error al registrar el Service Worker:", err);
-    }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      console.log("Service Worker registrado", reg);
+    }).catch((err) => {
+      console.error("Error al registrar el Service Worker", err);
+    });
   });
 }
 
@@ -990,44 +922,81 @@ document.addEventListener('DOMContentLoaded', function() {
     const contextMenu = document.getElementById('colorContextMenu');
     let activeSunbed = null;
     let touchTimer = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const LONG_PRESS_DURATION = 500;
-    const TOUCH_MOVE_THRESHOLD = 10;
+    const LONG_PRESS_DURATION = 500; // 500ms para activar el menú en dispositivos táctiles
 
     // Función para mostrar el menú contextual
     function showContextMenu(e, sunbed) {
         e.preventDefault();
-        e.stopPropagation();
         activeSunbed = sunbed;
         
-        // Obtener la posición del evento táctil o del clic
-        const x = e.touches ? e.touches[0].clientX : e.clientX;
-        const y = e.touches ? e.touches[0].clientY : e.clientY;
+        // Obtener la posición de la sunbed
+        const sunbedRect = sunbed.getBoundingClientRect();
+        const menuRect = contextMenu.getBoundingClientRect();
         
-        // Posicionar el menú cerca del punto de toque pero asegurando que sea visible
-        contextMenu.style.left = (x - contextMenu.offsetWidth / 2) + 'px';
-        contextMenu.style.top = (y - contextMenu.offsetHeight - 20) + 'px';
+        // Calcular la posición óptima para el menú
+        let left = sunbedRect.left + window.scrollX;
+        let top = sunbedRect.top + window.scrollY - menuRect.height - 10;
         
-        // Ajustar si el menú se sale de la pantalla
-        const rect = contextMenu.getBoundingClientRect();
-        if (rect.left < 10) contextMenu.style.left = '10px';
-        if (rect.right > window.innerWidth - 10) {
-            contextMenu.style.left = (window.innerWidth - contextMenu.offsetWidth - 10) + 'px';
+        // Asegurar que el menú no se salga de la pantalla
+        if (left + menuRect.width > window.innerWidth) {
+            left = window.innerWidth - menuRect.width - 10;
         }
-        if (rect.top < 10) {
-            contextMenu.style.top = (y + 20) + 'px';
+        if (top < 0) {
+            top = sunbedRect.bottom + window.scrollY + 10;
         }
         
+        contextMenu.style.left = left + 'px';
+        contextMenu.style.top = top + 'px';
         contextMenu.style.display = 'block';
         contextMenu.classList.add('visible');
         
         // Marcar la opción actualmente seleccionada
-        const currentStep = sunbed.dataset.actualStep || '1';
-        contextMenu.querySelectorAll('.color-option').forEach(option => {
-            option.classList.toggle('selected', option.dataset.step === currentStep);
-        });
+        const currentStep = sunbed.dataset.actualStep;
+        if (currentStep) {
+            contextMenu.querySelectorAll('.color-option').forEach(option => {
+                option.classList.toggle('selected', option.dataset.step === currentStep);
+            });
+        }
     }
+
+    // Evento para clic derecho
+    document.addEventListener('contextmenu', function(e) {
+        const sunbed = e.target.closest('.sunbed');
+        if (sunbed) {
+            showContextMenu(e, sunbed);
+        }
+    });
+
+    // Eventos para dispositivos táctiles
+    document.addEventListener('touchstart', function(e) {
+        const sunbed = e.target.closest('.sunbed');
+        if (sunbed) {
+            touchTimer = setTimeout(() => {
+                showContextMenu(e, sunbed);
+            }, LONG_PRESS_DURATION);
+        }
+    });
+
+    document.addEventListener('touchend', function() {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    });
+
+    document.addEventListener('touchmove', function() {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    });
+
+    // Cerrar menú al hacer clic en cualquier lugar
+    document.addEventListener('click', function(e) {
+        if (!contextMenu.contains(e.target)) {
+            hideContextMenu();
+        }
+    });
 
     // Función para ocultar el menú
     function hideContextMenu() {
@@ -1035,56 +1004,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             contextMenu.style.display = 'none';
         }, 200);
-        activeSunbed = null;
     }
-
-    // Eventos táctiles mejorados para las hamacas
-    document.querySelectorAll('.sunbed').forEach(sunbed => {
-        sunbed.addEventListener('touchstart', function(e) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            touchTimer = setTimeout(() => {
-                showContextMenu(e, sunbed);
-                if ('vibrate' in navigator) {
-                    navigator.vibrate(50);
-                }
-            }, LONG_PRESS_DURATION);
-        }, { passive: false });
-
-        sunbed.addEventListener('touchmove', function(e) {
-            if (touchTimer) {
-                const moveX = Math.abs(e.touches[0].clientX - touchStartX);
-                const moveY = Math.abs(e.touches[0].clientY - touchStartY);
-                if (moveX > TOUCH_MOVE_THRESHOLD || moveY > TOUCH_MOVE_THRESHOLD) {
-                    clearTimeout(touchTimer);
-                    touchTimer = null;
-                }
-            }
-        }, { passive: true });
-
-        sunbed.addEventListener('touchend', function() {
-            if (touchTimer) {
-                clearTimeout(touchTimer);
-                touchTimer = null;
-            }
-        });
-    });
-
-    // Evento para clic derecho en desktop
-    document.addEventListener('contextmenu', function(e) {
-        const sunbed = e.target.closest('.sunbed');
-        if (sunbed) {
-            e.preventDefault();
-            showContextMenu(e, sunbed);
-        }
-    });
-
-    // Cerrar menú al hacer clic fuera
-    document.addEventListener('click', function(e) {
-        if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
-            hideContextMenu();
-        }
-    });
 
     // Manejar la selección de color
     contextMenu.addEventListener('click', function(e) {
@@ -1102,20 +1022,32 @@ document.addEventListener('DOMContentLoaded', function() {
             activeSunbed.dataset.actualStep = step;
             
             // Guardar en Firebase
-            guardarColorSunbed(activeSunbed.id, step);
+            const sunbedId = activeSunbed.id;
+            guardarColorSunbed(sunbedId, step);
             
-            // Feedback táctil
+            // Feedback táctil en dispositivos móviles
             if ('vibrate' in navigator) {
                 navigator.vibrate(50);
             }
             
+            // Ocultar menú con animación
             hideContextMenu();
         }
     });
 
-    // Cerrar menú en eventos adicionales
+    // Soporte para teclado
+    contextMenu.addEventListener('keydown', function(e) {
+        const colorOption = e.target.closest('.color-option');
+        if (colorOption && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            colorOption.click();
+        }
+    });
+
+    // Cerrar menú al hacer scroll
     window.addEventListener('scroll', hideContextMenu);
-    window.addEventListener('resize', hideContextMenu);
+
+    // Cerrar menú al cambiar de orientación
     window.addEventListener('orientationchange', hideContextMenu);
 });
 
@@ -1136,7 +1068,7 @@ function scrollHistorial(direction) {
 // === BOTONERA FIJA INFERIOR ===
 document.addEventListener('DOMContentLoaded', function() {
   const menuToggle = document.getElementById('menu-toggle');
-  const menu = document.getElementById('menu-desplegable');
+  const menu = document.getElementById('menu');
   if (menu) {
     menu.style.display = 'none'; // Ocultar el menú por defecto al cargar
   }
@@ -1276,24 +1208,29 @@ $(document).ready(function() {
     const historial = snapshot.val();
     const $historial = $('#historial');
     $historial.empty();
+    
     if (historial) {
-      // Convertir el objeto a array y ordenar por fecha más reciente
-      const historialArray = Object.entries(historial)
+      // Convertir el objeto a array y ordenar por timestamp
+      const entries = Object.entries(historial)
         .map(([key, value]) => ({
           ...value,
           key
         }))
         .sort((a, b) => {
-          // Convertir las fechas a objetos Date para comparación
-          const fechaA = new Date(a.fecha.split(' ')[0].split('/').reverse().join('-') + ' ' + a.fecha.split(' ')[1]);
-          const fechaB = new Date(b.fecha.split(' ')[0].split('/').reverse().join('-') + ' ' + b.fecha.split(' ')[1]);
-          return fechaB - fechaA; // Orden descendente (más reciente primero)
+          // Ordenar por timestamp si existe, si no por la fecha
+          const timeA = a.timestamp || new Date(a.fecha.split(' ')[0].split('/').reverse().join('-')).getTime();
+          const timeB = b.timestamp || new Date(b.fecha.split(' ')[0].split('/').reverse().join('-')).getTime();
+          return timeB - timeA; // Orden descendente (más reciente primero)
         });
 
-      historialArray.forEach(entry => {
+      entries.forEach(entry => {
         const li = document.createElement('li');
         if (entry.devolucion) {
           li.textContent = `Devolución Hamaca ${entry.hamaca} - Total: €${entry.total} - Devolución: €${entry.devolucion} - Método: ${entry.metodo} - ${entry.fecha}`;
+        } else if (entry.reinicio) {
+          li.textContent = `--- REINICIO DE CALCULADORA - ${entry.fecha} ---`;
+          li.style.fontWeight = 'bold';
+          li.style.color = '#ff0000';
         } else {
           const sombrillaInfo = entry.sombrillaExtra ? ' (Sombrilla Extra)' : '';
           li.textContent = `Hamaca ${entry.hamaca} - Total: €${entry.total}${sombrillaInfo} - Recibido: €${entry.recibido} - Cambio: €${entry.cambio} - Método: ${entry.metodo} - ${entry.fecha}`;
@@ -1306,255 +1243,145 @@ $(document).ready(function() {
 
 // --- Sincronización del registro total ---
 $(document).ready(function() {
-  db.ref('historial').on('value', (snapshot) => {
-    const historial = snapshot.val();
-    let totalEfectivo = 0;
-    let totalTarjeta = 0;
-    if (historial) {
-      Object.values(historial).forEach(entry => {
-        if (!entry.devolucion) {
-          const total = parseFloat(entry.total);
-          if (entry.metodo === 'efectivo') {
-            totalEfectivo += total;
-          } else {
-            totalTarjeta += total;
-          }
-        } else {
-          const total = parseFloat(entry.total);
-          if (entry.metodo === 'efectivo') {
-            totalEfectivo -= total;
-          } else {
-            totalTarjeta -= total;
-          }
-        }
-      });
-    }
-    $("#totalEfectivo").text(totalEfectivo.toFixed(2));
-    $("#totalTarjeta").text(totalTarjeta.toFixed(2));
-    $("#totalGeneral").text((totalEfectivo + totalTarjeta).toFixed(2));
-  });
-});
+    // Escuchar cambios en los totales
+    db.ref('totales').on('value', (snapshot) => {
+        const totales = snapshot.val() || { efectivo: 0, tarjeta: 0, general: 0 };
+        $("#totalEfectivo").text(parseFloat(totales.efectivo).toFixed(2));
+        $("#totalTarjeta").text(parseFloat(totales.tarjeta).toFixed(2));
+        $("#totalGeneral").text(parseFloat(totales.general).toFixed(2));
+    });
 
-// Función para crear y mostrar el diálogo personalizado
-function showCustomDialog(message, onConfirm, onCancel) {
-    // Crear el contenedor del diálogo
-    const dialog = document.createElement('div');
-    dialog.style.position = 'fixed';
-    dialog.style.top = '0';
-    dialog.style.left = '0';
-    dialog.style.width = '100%';
-    dialog.style.height = '100%';
-    dialog.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    dialog.style.display = 'flex';
-    dialog.style.justifyContent = 'center';
-    dialog.style.alignItems = 'center';
-    dialog.style.zIndex = '9999';
-
-    // Crear el contenido del diálogo
-    const content = document.createElement('div');
-    content.style.backgroundColor = 'white';
-    content.style.padding = '20px';
-    content.style.borderRadius = '10px';
-    content.style.width = '80%';
-    content.style.maxWidth = '400px';
-    content.style.textAlign = 'center';
-
-    // Crear el mensaje
-    const messageElement = document.createElement('p');
-    messageElement.textContent = message;
-    messageElement.style.marginBottom = '20px';
-    content.appendChild(messageElement);
-
-    // Crear los botones
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.justifyContent = 'center';
-    buttonContainer.style.gap = '10px';
-
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Sí';
-    confirmButton.style.padding = '10px 20px';
-    confirmButton.style.backgroundColor = '#4CAF50';
-    confirmButton.style.color = 'white';
-    confirmButton.style.border = 'none';
-    confirmButton.style.borderRadius = '5px';
-    confirmButton.style.cursor = 'pointer';
-    confirmButton.style.fontSize = '16px';
-
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'No';
-    cancelButton.style.padding = '10px 20px';
-    cancelButton.style.backgroundColor = '#f44336';
-    cancelButton.style.color = 'white';
-    cancelButton.style.border = 'none';
-    cancelButton.style.borderRadius = '5px';
-    cancelButton.style.cursor = 'pointer';
-    cancelButton.style.fontSize = '16px';
-
-    buttonContainer.appendChild(confirmButton);
-    buttonContainer.appendChild(cancelButton);
-    content.appendChild(buttonContainer);
-    dialog.appendChild(content);
-
-    // Añadir el diálogo al body
-    document.body.appendChild(dialog);
-
-    // Funciones para los botones
-    confirmButton.onclick = () => {
-        document.body.removeChild(dialog);
-        if (onConfirm) onConfirm();
-    };
-
-    cancelButton.onclick = () => {
-        document.body.removeChild(dialog);
-        if (onCancel) onCancel();
-    };
-}
-
-// Variables para el estado de conexión
-let isConnected = localStorage.getItem('dbConnectionState') !== 'disconnected';
-let dbListeners = [];
-
-// Función para inicializar Firebase y sus listeners
-function initializeFirebase() {
-  if (!window.db) {
-    console.error('Firebase no está inicializado todavía');
-    setTimeout(initializeFirebase, 100);
-    return;
-  }
-
-  // --- Sincronización del registro total ---
-  $(document).ready(function() {
+    // Escuchar cambios en el historial
     db.ref('historial').on('value', (snapshot) => {
-      const historial = snapshot.val();
-      let totalEfectivo = 0;
-      let totalTarjeta = 0;
-      if (historial) {
-        Object.values(historial).forEach(entry => {
-          if (!entry.devolucion) {
-            const total = parseFloat(entry.total);
-            if (entry.metodo === 'efectivo') {
-              totalEfectivo += total;
-            } else {
-              totalTarjeta += total;
-            }
-          } else {
-            const total = parseFloat(entry.total);
-            if (entry.metodo === 'efectivo') {
-              totalEfectivo -= total;
-            } else {
-              totalTarjeta -= total;
-            }
-          }
-        });
-      }
-      $("#totalEfectivo").text(totalEfectivo.toFixed(2));
-      $("#totalTarjeta").text(totalTarjeta.toFixed(2));
-      $("#totalGeneral").text((totalEfectivo + totalTarjeta).toFixed(2));
-    });
-  });
-
-  // Inicializar el estado de la conexión
-  const btnElement = document.getElementById('db-connection-btn');
-  if (btnElement) {
-    if (localStorage.getItem('dbConnectionState') === 'disconnected') {
-      disconnectFromFirebase();
-    } else {
-      db.goOnline();
-      btnElement.classList.remove('disconnected');
-      btnElement.querySelector('.connection-text').textContent = 'Conectado';
-    }
-    
-    btnElement.addEventListener('click', function() {
-      if (isConnected) {
-        if (confirm('¿Estás seguro de que deseas desconectar la base de datos? Los cambios no se sincronizarán hasta que vuelvas a conectar.')) {
-          disconnectFromFirebase();
+        const historial = snapshot.val();
+        const $historial = $('#historial');
+        $historial.empty();
+        
+        if (historial) {
+            Object.values(historial).reverse().forEach(entry => {
+                const li = document.createElement('li');
+                if (entry.devolucion) {
+                    li.textContent = `Devolución Hamaca ${entry.hamaca} - Total: €${entry.total} - Devolución: €${entry.devolucion} - Método: ${entry.metodo} - ${entry.fecha}`;
+                } else if (entry.reinicio) {
+                    li.textContent = `--- REINICIO DE CALCULADORA - ${entry.fecha} ---`;
+                    li.style.fontWeight = 'bold';
+                    li.style.color = '#ff0000';
+                } else {
+                    li.textContent = `Hamaca ${entry.hamaca} - Total: €${entry.total} - Recibido: €${entry.recibido} - Cambio: €${entry.cambio} - Método: ${entry.metodo} - ${entry.fecha}`;
+                }
+                $historial.prepend(li);
+            });
         }
-      } else {
-        if (confirm('¿Deseas reconectar la base de datos?')) {
-          connectToFirebase();
-        }
-      }
     });
-  }
-
-  // Inicializar otros listeners de Firebase
-  if (typeof registerDbListener === 'function') {
-    db.ref('sunbeds').on('value', function callback(snapshot) {
-      // ... código existente ...
-    });
-    registerDbListener(db.ref('sunbeds'), callback);
-  }
-}
-
-// Esperar a que el DOM esté listo y Firebase esté inicializado
-$(document).ready(function() {
-  initializeFirebase();
 });
-
-// Función para desconectar de Firebase
-function disconnectFromFirebase() {
-  // Desconectar todos los listeners
-  dbListeners.forEach(listener => {
-    if (listener.ref && listener.callback) {
-      listener.ref.off('value', listener.callback);
-    }
-  });
-  dbListeners = [];
-  
-  // Desconectar la base de datos
-  db.goOffline();
-  isConnected = false;
-  
-  // Guardar estado en localStorage
-  localStorage.setItem('dbConnectionState', 'disconnected');
-  
-  // Actualizar UI
-  const btnElement = document.getElementById('db-connection-btn');
-  btnElement.classList.add('disconnected');
-  btnElement.querySelector('.connection-text').textContent = 'Desconectado';
-}
-
-// Función para reconectar a Firebase
-function connectToFirebase() {
-  // Reconectar la base de datos
-  db.goOnline();
-  isConnected = true;
-  
-  // Guardar estado en localStorage
-  localStorage.setItem('dbConnectionState', 'connected');
-  
-  // Actualizar UI
-  const btnElement = document.getElementById('db-connection-btn');
-  btnElement.classList.remove('disconnected');
-  btnElement.querySelector('.connection-text').textContent = 'Conectado';
-  
-  // Recargar la página para restablecer todos los listeners
-  window.location.reload();
-}
 
 function reiniciarCalculadora() {
-  // Limpiar el historial y resetear totales en Firebase
-  const promises = [
-    // Limpiar historial
-    db.ref('historial').remove(),
-    // Resetear totales
-    db.ref('totales').set({
-      efectivo: 0,
-      tarjeta: 0,
-      general: 0
-    })
-  ];
+    if (confirm("¿Estás seguro de que deseas reiniciar la calculadora? Se borrará el registro total actual, pero se mantendrá el historial de operaciones.")) {
+        // 1. Limpiar el historial visual
+        const historial = document.getElementById('historial');
+        if (historial) {
+            historial.innerHTML = '';
+        }
 
-  Promise.all(promises).then(() => {
-    // Actualizar la interfaz de totales
-    document.getElementById('totalEfectivo').textContent = '0.00';
-    document.getElementById('totalTarjeta').textContent = '0.00';
-    document.getElementById('totalGeneral').textContent = '0.00';
-    
-    // Limpiar la lista del historial en la interfaz
-    document.getElementById('historial').innerHTML = '';
-  }).catch(error => {
-    console.error('Error al reiniciar calculadora:', error);
-  });
+        // 2. Resetear los totales en la interfaz
+        document.getElementById('totalEfectivo').textContent = '0.00';
+        document.getElementById('totalTarjeta').textContent = '0.00';
+        document.getElementById('totalGeneral').textContent = '0.00';
+
+        // 3. Resetear variables globales
+        totalEfectivo = 0;
+        totalTarjeta = 0;
+
+        // 4. Crear el registro de reinicio
+        const fechaObj = new Date();
+        const dia = String(fechaObj.getDate()).padStart(2, '0');
+        const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+        const anio = fechaObj.getFullYear();
+        const horas = String(fechaObj.getHours()).padStart(2, '0');
+        const minutos = String(fechaObj.getMinutes()).padStart(2, '0');
+        const fecha = `${dia}/${mes}/${anio} ${horas}:${minutos}`;
+
+        // 5. Limpiar y reiniciar todo en Firebase
+        Promise.all([
+            // Limpiar los totales
+            db.ref('totales').remove(),
+            // Limpiar el registro actual
+            db.ref('registro_actual').remove()
+        ]).then(() => {
+            // 6. Guardar el registro de reinicio en el historial
+            return guardarHistorialPago({
+                fecha,
+                timestamp: fechaObj.getTime(),
+                hamaca: "-",
+                total: "0.00",
+                recibido: "0.00",
+                cambio: "0.00",
+                metodo: "reinicio",
+                reinicio: true
+            });
+        }).then(() => {
+            // 7. Establecer nuevos totales en 0
+            return db.ref('totales').set({
+                efectivo: 0,
+                tarjeta: 0,
+                general: 0
+            });
+        }).then(() => {
+            // 8. Forzar una recarga de la página
+            window.location.reload();
+        }).catch(error => {
+            console.error("Error al reiniciar la calculadora:", error);
+            alert("Hubo un error al reiniciar la calculadora. Por favor, inténtalo de nuevo.");
+        });
+    }
 }
+
+// Modificar la función de sincronización inicial
+$(document).ready(function() {
+    // Verificar si hay un reinicio pendiente
+    db.ref('reinicio_pendiente').once('value').then((snapshot) => {
+        const reinicioPendiente = snapshot.val();
+        if (reinicioPendiente) {
+            // Si hay un reinicio pendiente, limpiar todo
+            Promise.all([
+                db.ref('historial').remove(),
+                db.ref('totales').remove(),
+                db.ref('registro_actual').remove()
+            ]).then(() => {
+                // Establecer totales en 0
+                return db.ref('totales').set({
+                    efectivo: 0,
+                    tarjeta: 0,
+                    general: 0
+                });
+            }).then(() => {
+                // Eliminar la marca de reinicio pendiente
+                return db.ref('reinicio_pendiente').remove();
+            }).catch(error => {
+                console.error("Error al procesar reinicio pendiente:", error);
+            });
+        }
+    });
+});
+
+// Manejadores para los interruptores deslizantes
+document.getElementById('pago').addEventListener('change', function() {
+    const pagoText = document.getElementById('pagoText');
+    pagoText.textContent = this.checked ? 'Tarjeta' : 'Efectivo';
+});
+
+document.getElementById('sombrillaExtra').addEventListener('change', function() {
+    const sombrillaText = document.getElementById('sombrillaText');
+    sombrillaText.textContent = this.checked ? 'Sí (+4€)' : 'No';
+});
+
+// Función para obtener el valor del método de pago
+function getMetodoPago() {
+    return document.getElementById('pago').checked ? 'tarjeta' : 'efectivo';
+}
+
+// Función para obtener el valor de la sombrilla extra
+function getSombrillaExtra() {
+    return document.getElementById('sombrillaExtra').checked ? 'si' : 'no';
+}
+

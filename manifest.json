@@ -1,17 +1,13 @@
 {
   "name": "Playa Juan 3.7",
-  "short_name": "Playa Juan",
+  "short_name": "Playa Juan 3.7",
   "description": "Aplicación de gestión de hamacas para Playa Juan",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#CEEFF1",
   "theme_color": "#20B2AA",
-  "orientation": "any",
+  "orientation": "portrait",
   "lang": "es",
-  "categories": ["business", "productivity"],
-  "dir": "ltr",
-  "prefer_related_applications": false,
-  "scope": "/",
   "icons": [
     {
       "src": "icon-192x192.png",
@@ -24,18 +20,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Hamacas",
-      "url": "/src/hamacas/index.html",
-      "icons": [{ "src": "icon-192x192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Reservas",
-      "url": "/src/reservas/index.html",
-      "icons": [{ "src": "icon-192x192.png", "sizes": "192x192" }]
     }
   ]
 } 
