@@ -1,8 +1,4 @@
-// Import Firebase modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore.js";
-
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAbV6PP_EEmfaGzzIKbQA0xGy5McchskUQ",
     authDomain: "backoffice-61483.firebaseapp.com",
@@ -14,9 +10,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore
-const db = getFirestore(app);
-
-export { db }; 
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    window.db = db;
+} catch (error) {
+    console.error('Error al inicializar Firebase:', error);
+    alert('Error al inicializar Firebase: ' + error.message);
+} 

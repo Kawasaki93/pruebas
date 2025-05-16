@@ -49,12 +49,20 @@ label {
     font-weight: bold;
 }
 
-input[type="number"] {
+input[type="number"],
+input[type="date"] {
     width: 100%;
     padding: 0.5rem;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1rem;
+}
+
+.date-selector {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
 }
 
 button {

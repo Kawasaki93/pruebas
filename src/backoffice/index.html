@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Contabilidad</title>
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Firebase Core and Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,18 +19,26 @@
         <div class="input-section">
             <h2>Registro Diario</h2>
             <div class="input-group">
+                <label for="fecha-registro">Fecha:</label>
+                <input type="date" id="fecha-registro">
+            </div>
+            <div class="input-group">
                 <label for="efectivo">Efectivo:</label>
-                <input type="number" id="efectivo" step="0.01">
+                <input type="number" id="efectivo" step="0.01" min="0">
             </div>
             <div class="input-group">
                 <label for="tarjeta">Tarjeta:</label>
-                <input type="number" id="tarjeta" step="0.01">
+                <input type="number" id="tarjeta" step="0.01" min="0">
             </div>
             <button id="guardar">Guardar</button>
         </div>
 
         <div class="totals-section">
             <h2>Totales del Día</h2>
+            <div class="date-selector">
+                <label for="fecha-totales">Ver totales del día:</label>
+                <input type="date" id="fecha-totales">
+            </div>
             <div class="totals-grid">
                 <div class="total-item">
                     <span>Efectivo Acumulado:</span>
@@ -68,7 +80,29 @@
         </div>
     </div>
 
-    <script type="module" src="config.js"></script>
-    <script type="module" src="app.js"></script>
+    <!-- Initialize Firebase -->
+    <script src="config.js"></script>
+    
+    <!-- Application Code -->
+    <script src="app.js"></script>
+
+    <script>
+        // Verificación de Firebase
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Estado de carga:');
+            console.log('- Firebase:', typeof firebase !== 'undefined');
+            console.log('- Firestore:', typeof firebase?.firestore === 'function');
+            console.log('- Base de datos:', typeof window.db !== 'undefined');
+            
+            if (typeof firebase === 'undefined') {
+                console.error('Error: Firebase no está cargado correctamente');
+                alert('Error: Firebase no está cargado correctamente');
+            }
+            if (!window.db) {
+                console.error('Error: La base de datos no está inicializada');
+                alert('Error: La base de datos no está inicializada');
+            }
+        });
+    </script>
 </body>
 </html> 
